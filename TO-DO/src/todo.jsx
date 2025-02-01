@@ -1,90 +1,119 @@
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import "./index.css";
+
 export default function ToDo() {
-  let item = {
-    padding: "8px",
-    margin: "8px",
+  const [todos, setTodos] = useState([]);
+  const [task, setTask] = useState("");
+
+  const addTask = () => {
+    if (!task.trim()) return;
+    setTodos([
+      ...todos,
+      { id: uuidv4(), task, completed: false, isEditing: false },
+    ]);
+    setTask("");
   };
 
-  let inpStyle = {
-    padding: "9px",
-  };
-  let buttonDel = {
-    margin: "3px 7px",
-    padding: "2px 5px",
-    borderRadius: "0px",
+  const deleteTask = (id) => {
+    setTodos(todos.filter((todo) => todo.id !== id));
   };
 
-  let [todos, setTodos] = useState([]);
-  let [task, setTask] = useState("");
-
-  let taskAdd = () => {
-    console.log("added");
-    setTodos((prevTodo) => {
-      return [...prevTodo, { Task: task, id: uuidv4() }];
-    });
-
-    setTask(""); // clear input after adding text
-  };
-
-  let updateTask = (event) => {
-    // console.log(event.target.value);
-    setTask(event.target.value);
-  };
-
-  let ButtonDel = (id) => {
-    console.log("del", id);
-    setTodos(todos.filter((i) => i.id != id));
-    // let copy = todos.filter((i) => i.id != id);
-    // console.log(copy);
-  };
-  let upperAll = () => {
+  const toggleCompletion = (id) => {
     setTodos(
-      todos.map((todo) => {
-        return {
-          ...todo,
-          Task: todo.Task.toUpperCase(),
-        };
-      })
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
+  };
+
+  const startEditing = (id) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, isEditing: true } : todo
+      )
+    );
+  };
+
+  const editTask = (id, newTask) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, task: newTask, isEditing: false } : todo
+      )
     );
   };
 
   return (
-    <>
-      <div>
-        <div style={item}>
-          <input
-            type="text"
-            placeholder="Enter Task"
-            value={task}
-            onChange={updateTask}
-            style={inpStyle}
-          />
-          &nbsp; &nbsp; &nbsp;
-          <button onClick={taskAdd} type="submit">
-            Add
-          </button>
-          <br />
-          <br />
-        </div>
-        <br />
-        <div style={item}>
-          <ul>
-            {todos.map((todo) => {
-              return (
-                <li key={todo.id}>
-                  <span>{todo.Task}</span>
-                  <button style={buttonDel} onClick={() => ButtonDel(todo.id)}>
-                    X
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-        <br />
-        <button onClick={upperAll}>Set to Uppercase All</button>
+    <div className="todo-container">
+      <h1 className="todo-title">Manage Your Tasks</h1>
+      <div className="todo-input-box">
+        <input
+          type="text"
+          placeholder="Enter Task"
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          className="todo-input"
+        />
+        <button onClick={addTask} className="todo-add-btn">
+          Add
+        </button>
       </div>
-    </>
+      <ul className="todo-list">
+        {todos.map((todo) => (
+          <li key={todo.id} className="todo-item">
+            <input
+              type="checkbox"
+              checked={todo.completed}
+              onChange={() => toggleCompletion(todo.id)}
+              className="todo-checkbox"
+            />
+            {todo.isEditing ? (
+              <>
+                <input
+                  type="text"
+                  defaultValue={todo.task}
+                  onBlur={(e) => editTask(todo.id, e.target.value)}
+                  className="todo-edit-input"
+                  autoFocus
+                />
+                <button
+                  onClick={(e) =>
+                    editTask(todo.id, e.target.previousSibling.value)
+                  }
+                  className="todo-submit-btn"
+                >
+                  ✅
+                </button>
+              </>
+            ) : (
+              <span
+                className={`todo-task ${
+                  todo.completed ? "todo-completed" : ""
+                }`}
+                onClick={() => toggleCompletion(todo.id)}
+              >
+                {todo.task}
+              </span>
+            )}
+            <div className="todo-actions">
+              {!todo.isEditing && !todo.completed && (
+                <button
+                  onClick={() => startEditing(todo.id)}
+                  className="todo-edit-btn"
+                >
+                  ✏️
+                </button>
+              )}
+              <button
+                onClick={() => deleteTask(todo.id)}
+                className="todo-delete-btn"
+              >
+                ❌
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
